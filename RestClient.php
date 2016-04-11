@@ -8,16 +8,18 @@ class RestClient
 	public function GetPipelines()
 	{
 		$curl = $this->SetUpcURL("pipelines");
-		//curl_setopt($curl, CURLOPT_POSTFIELDS, $curl_post_data);
-		
-		$curl_response = curl_exec($curl);
-		
+		$curl_response = curl_exec($curl);		
 		$this->ProcessResponse($curl_response, $curl);
 	}
 	
 	public function AddUser($pipeline, $details)
 	{
 		
+	}
+	
+	function __construct()
+	{
+		$this->api_key = parse_ini_file("config.ini")["API_KEY"];
 	}
 	
 	private function SetUpcURL($endpoint)
@@ -28,6 +30,7 @@ class RestClient
 		curl_setopt($curl, CURLOPT_RETURNTRANSFER, true);	
 		curl_setopt($curl, CURLOPT_SSL_VERIFYHOST, false);
 		curl_setopt($curl, CURLOPT_SSL_VERIFYPEER, false);
+		curl_setopt($curl, CURLOPT_USERPWD, $this->api_key );  
 		
 		return $curl;
 	}
@@ -44,12 +47,14 @@ class RestClient
 		
 		$decoded = json_decode($response);
 		
-		if (isset($decoded->success) && !$decoded->success);
+		if (array_key_exists("success", $decoded) && !$decoded->success)
 		{
 			die(sprintf("Error Message Resturned: %s", $decoded->error));
 		}
 		echo "Resquest Sucessful";
-		var_export($decoded->response);
+		echo '<pre> ' ;
+		print_r($decoded) ;
+		'</pre>';
 	}
 	
 }
