@@ -7,9 +7,46 @@ class RestClient
 		
 	public function GetPipelines()
 	{
-		$curl = $this->SetUpcURL("pipelines");
-		$curl_response = curl_exec($curl);		
-		$this->ProcessResponse($curl_response, $curl);
+		$pipelines = $this->ProcessGETEcURL("pipelines");
+	
+		//TODO:Cache this details
+		
+		$final_piplines = array();
+		foreach ($pipelines as $pipeline)
+		{
+			$final_piplines[$pipeline->name] = $pipeline->pipelineKey;
+		}
+
+		return $final_piplines;
+
+	}
+	
+	public function GetUsers($pipeline=null)
+	{
+		$all_boxes = $this->ProcessGETEcURL("boxes");
+		
+		if (!$pipeline)
+		{
+			return $all_boxes;
+		}
+		
+		$pipelines = $this->GetPipelines();
+		
+		$final_users = array();
+		
+		foreach($all_boxes as $box)
+		{
+			//TODO: Dont use the field id
+			if ($box->pipelineKey == $pipelines[$pipeline])
+			{
+			
+				$final_users[$box->fields->{1004}] = $box->fields;
+			}
+		}
+		
+		return $final_users;
+
+				
 	}
 	
 	public function AddUser($pipeline, $details)
@@ -22,7 +59,7 @@ class RestClient
 		$this->api_key = parse_ini_file("config.ini")["API_KEY"];
 	}
 	
-	private function SetUpcURL($endpoint)
+	private function ProcessGETEcURL($endpoint)
 	{
 		$curl = curl_init(sprintf("%s/%s", $this->base_url, $endpoint));
 
@@ -32,7 +69,8 @@ class RestClient
 		curl_setopt($curl, CURLOPT_SSL_VERIFYPEER, false);
 		curl_setopt($curl, CURLOPT_USERPWD, $this->api_key );  
 		
-		return $curl;
+		$curl_response = curl_exec($curl);		
+		return $this->ProcessResponse($curl_response, $curl);
 	}
 	
 	private function ProcessResponse($response, $curl)
@@ -51,10 +89,12 @@ class RestClient
 		{
 			die(sprintf("Error Message Resturned: %s", $decoded->error));
 		}
+		
+
 		echo "Resquest Sucessful";
-		echo '<pre> ' ;
-		print_r($decoded) ;
-		'</pre>';
+
+		return $decoded ;
+
 	}
 	
 }
